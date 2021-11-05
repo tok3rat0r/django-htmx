@@ -1,7 +1,9 @@
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
+from django.contrib.auth import get_user_model
 
 from films.forms import RegisterForm
 
@@ -20,3 +22,10 @@ class RegisterView(FormView):
     def form_valid(self, form):
         form.save()  # save the user
         return super().form_valid(form)
+
+def check_username(request):
+    username = request.POST.get('username')
+    if get_user_model().objects.filter(username=username).exists():
+        return HttpResponse("<div style='color: red;'>This username already exists</div>")
+    else:
+        return HttpResponse("<div style='color: green;'>This username is available</div>")
