@@ -6,7 +6,8 @@
 
         <button class="btn btn-primary"
                 hx-get="{% url 'film-list-partial' %}"
-                hx-target="#film-list">Your list</button>
+                hx-target="#film-list"
+                hx-push-url="/films">Your list</button>
     </div>
     <div>
         {% if userfilm.film.image %}
