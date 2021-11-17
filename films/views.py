@@ -1,9 +1,11 @@
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.views.generic import FormView, TemplateView
 from django.contrib.auth import get_user_model
+
 from films.models import Film, UserFilms
 from django.views.generic.list import ListView
 from django.contrib.auth.decorators import login_required
@@ -15,6 +17,9 @@ from films.forms import RegisterForm
 from films.utils import get_max_order, reorder
 
 # Create your views here.
+from htmx import settings
+
+
 class IndexView(TemplateView):
     template_name = 'index.html'
     
@@ -43,7 +48,7 @@ class FilmList(LoginRequiredMixin, ListView):
             return 'films.html'
 
     def get_queryset(self):
-        return UserFilms.objects.filter(user=self.request.user)
+        return UserFilms.objects.prefetch_related('film').filter(user=self.request.user)
 
 def check_username(request):
     username = request.POST.get('username')
@@ -85,12 +90,26 @@ def clear(request):
 def sort(request):
     film_pk_order = request.POST.getlist('film_order')
     films = []
+    updated_films = []
+    userfilms = UserFilms.objects.prefetch_related('film').filter(user=request.user)
+
     for idx, film_pk in enumerate(film_pk_order, start=1):
-        userfilm = UserFilms.objects.get(pk=film_pk)
-        userfilm.order = idx
-        userfilm.save()
+        userfilm = next(u for u in userfilms if u.pk == int(film_pk))
+
+        if userfilm.order != idx:
+            userfilm.order = idx
+            updated_films.append(userfilm)
+
         films.append(userfilm)
-    return render(request, 'partials/film-list.html', {'films': films})
+
+    UserFilms.objects.bulk_update(updated_films, ['order'])
+
+    paginator = Paginator(films, settings.PAGINATE_BY)
+    page_number = len(film_pk_order)/settings.PAGINATE_BY
+    page_obj = paginator.get_page(page_number)
+    context = {'films': films, 'page_obj': page_obj}
+
+    return render(request, 'partials/film-list.html', context)
 
 @login_required
 def detail(request, pk):

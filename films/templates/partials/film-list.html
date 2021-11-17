@@ -28,7 +28,10 @@
 
     {% if films %}
         {% csrf_token %}
-        <form class="sortable list-group" hx-trigger="end" hx-post="{% url 'sort' %}" hx-target="#film-list">
+        <form class="sortable list-group"
+              hx-trigger="end"
+              hx-post="{% url 'sort' %}"
+              hx-target="#film-list">
             {% include 'partials/film-list-elements.html' %}
         </form>
     {% else %}
