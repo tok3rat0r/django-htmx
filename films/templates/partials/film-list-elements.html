@@ -1,4 +1,4 @@
-{% for film in films %}
+{% for film in page_obj %}
 
     {% if forloop.last %}
         <div hx-get="{% url 'film-list' %}?page={{ page_obj.number|add:1 }}"
@@ -20,8 +20,9 @@
                       style="cursor: pointer;"
                       hx-delete="{% url 'delete-film' film.pk %}"
                       hx-target="#film-list"
-                      hx-confirm="Are you sure you want to delete this film"
-                >X</span>
+                      hx-confirm="Are you sure you want to delete this film">
+                    X
+                </span>
             </li>
         </div>
 {% endfor %}

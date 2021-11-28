@@ -38,7 +38,7 @@ class RegisterView(FormView):
 class FilmList(LoginRequiredMixin, ListView):
     template_name = 'films.html'
     model = Film
-    paginate_by = 16
+    paginate_by = settings.PAGINATE_BY
     context_object_name = 'films'
 
     def get_template_names(self):
@@ -64,8 +64,11 @@ def add_film(request):
     if not UserFilms.objects.filter(film=film, user=request.user).exists():
         UserFilms.objects.create(film=film, user=request.user, order=get_max_order(request.user))
     films = UserFilms.objects.filter(user=request.user)
+    paginator = Paginator(films, settings.PAGINATE_BY)
+    page_obj = paginator.get_page(1)
+    context = {'films': films, 'page_obj': page_obj}
     messages.success(request, f"Added {title} to list")
-    return render(request, 'partials/film-list.html', {'films': films})
+    return render(request, 'partials/film-list.html', context)
 
 @login_required
 @require_http_methods(['DELETE'])
@@ -73,7 +76,10 @@ def delete_film(request, pk):
     UserFilms.objects.get(pk=pk).delete()
     reorder(request.user)
     films = UserFilms.objects.filter(user=request.user)
-    return render(request, 'partials/film-list.html', {'films': films})
+    paginator = Paginator(films, settings.PAGINATE_BY)
+    page_obj = paginator.get_page(1)
+    context = {'films': films, 'page_obj': page_obj}
+    return render(request, 'partials/film-list.html', context)
 
 def search_film(request):
     search_text = request.POST.get('search')
@@ -105,8 +111,7 @@ def sort(request):
     UserFilms.objects.bulk_update(updated_films, ['order'])
 
     paginator = Paginator(films, settings.PAGINATE_BY)
-    page_number = len(film_pk_order)/settings.PAGINATE_BY
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator.get_page(1)
     context = {'films': films, 'page_obj': page_obj}
 
     return render(request, 'partials/film-list.html', context)
@@ -120,7 +125,11 @@ def detail(request, pk):
 @login_required
 def films_partial(request):
     films = UserFilms.objects.filter(user=request.user)
-    return render(request, 'partials/film-list.html', {'films': films})
+    paginator = Paginator(films, settings.PAGINATE_BY)
+    page_obj = paginator.get_page(1)
+    context = {'films': films, 'page_obj': page_obj}
+
+    return render(request, 'partials/film-list.html', context)
 
 @login_required
 def upload_image(request, pk):
