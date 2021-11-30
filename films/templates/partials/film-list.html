@@ -1,0 +1,46 @@
+<div class="d-flex justify-content-between align-items-center">
+    <p class="lead ml-0">My Films</p>
+    <form class="d-flex align-items-center">
+        {% csrf_token %}
+        <input type="text"
+               name="film-title"
+               class="form-control-sm mr-2"
+               placeholder="Enter a film" />
+
+        <button hx-post="{% url 'add-film' %}"
+                hx-target="#film-list"
+                type="submit"
+                class="btn btn-success btn-sm">Add Film</button>
+    </form>
+</div>
+<hr/>
+
+<div class="d-flex justify-content-between">
+
+<section class="col-6">
+    {% if messages %}
+    <ul class="messages" hx-get="{% url 'clear' %}" hx-trigger="load delay:3s">
+        {% for message in messages %}
+        <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if films %}
+        {% csrf_token %}
+        <form class="sortable list-group"
+              hx-trigger="end"
+              hx-post="{% url 'sort' %}"
+              hx-target="#film-list">
+            {% include 'partials/film-list-elements.html' %}
+        </form>
+    {% else %}
+        <p>You do not have any films in your list</p>
+    {% endif %}
+</section>
+
+<section>
+    {% include 'partials/search.html' %}
+</section>
+
+</div>
